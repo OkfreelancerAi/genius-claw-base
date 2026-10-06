@@ -84,11 +84,13 @@ export async function runCrawlCycle(): Promise<Finding[]> {
         const data = (await res.json()) as Record<string, { usd?: number; usd_24h_change?: number }>;
         for (const [cid, v] of Object.entries(data)) {
           const ch = v.usd_24h_change ?? 0;
+          const sign = ch >= 0 ? "+" : "";
+          const price = v.usd != null ? v.usd.toLocaleString() : "?";
           out.push(
             runRouter({
-              title: `Market: ${cid} $${v.usd?.toLocaleString() ?? "?} (${ch >= 0 ? "+" : ""}${ch.toFixed(2)}% 24h)`,
-              summary: `Live CoinGecko price for ${cid}. Relevant for Base/ClawPump treasury sizing.`,
-              url: `https://www.coingecko.com/en/coins/${cid}`,
+              title: "Market: " + cid + " $" + price + " (" + sign + ch.toFixed(2) + "% 24h)",
+              summary: "Live CoinGecko price for " + cid + ". Relevant for Base/ClawPump treasury sizing.",
+              url: "https://www.coingecko.com/en/coins/" + cid,
               source: "api",
               sourceRef: "coingecko:simple/price",
             })
@@ -102,8 +104,8 @@ export async function runCrawlCycle(): Promise<Finding[]> {
   for (const t of listTargets()) {
     out.push(
       runRouter({
-        title: `${t.label || t.value}: signal`,
-        summary: `Finding from ${t.type} target. Source-backed intel for ClawPump / Base.`,
+        title: (t.label || t.value) + ": signal",
+        summary: "Finding from " + t.type + " target. Source-backed intel for ClawPump / Base.",
         url: t.value.startsWith("http") ? t.value : undefined,
         source: t.type,
         sourceRef: t.value,
@@ -112,7 +114,7 @@ export async function runCrawlCycle(): Promise<Finding[]> {
     addJournal({
       findingId: "crawl",
       event: "crawl_target",
-      detail: `Scanned ${t.label || t.value}`,
+      detail: "Scanned " + (t.label || t.value),
       agent: "crawler",
     });
   }
